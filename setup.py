@@ -4,7 +4,7 @@ from setuptools import setup
 
 setup(
     name='tap-cloud-storage',
-    version='1.0.0',
+    version='1.0.1',
     description='hotglue tap for importing data from Google Cloud Storage',
     author='hotglue',
     url='https://hotglue.xyz',

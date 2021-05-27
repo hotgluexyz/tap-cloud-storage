@@ -56,6 +56,10 @@ def download(args):
 
     for blob in blobs:
         key = blob.name
+        if key.endswith("/"):
+            # Ignore directories
+            continue
+
         target_path = key.replace(remote_path, target_dir)
 
         logger.debug(f"Downloading: {bucket_name}:{key} -> {target_path}")
