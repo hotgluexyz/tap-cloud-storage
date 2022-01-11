@@ -4,6 +4,7 @@ import json
 import argparse
 import logging
 
+from pathlib import Path
 from google.cloud import storage
 
 logger = logging.getLogger("tap-cloud-storage")
@@ -60,7 +61,7 @@ def download(args):
             # Ignore directories
             continue
 
-        target_path = key.replace(remote_path, target_dir)
+        target_path = Path(target_dir).joinpath(Path(key).name)
 
         logger.debug(f"Downloading: {bucket_name}:{key} -> {target_path}")
         blob.download_to_filename(target_path)
