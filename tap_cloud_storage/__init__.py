@@ -87,6 +87,7 @@ def download(args):
     bucket_name = config['bucket']
     remote_path = config['path_prefix']
     target_dir = config['target_dir']
+    incremental_mode = config['incremental_mode']
 
     # Upload all data in input_path to Google Cloud Storage
     storage_client = storage.Client.from_service_account_json(args.config_path)
@@ -104,11 +105,20 @@ def download(args):
 
         target_path = Path(target_dir).joinpath(Path(key).name)
 
-        state["bookmarks"] = download_with_replication_key(blob, state["bookmarks"], target_path)
+        if incremental_mode:
+            state["bookmarks"] = download_with_replication_key(
+                blob,
+                state["bookmarks"],
+                target_path
+            )
+        else:
+            blob.download_to_filename(target_path)
 
     logger.info(f"Data downloaded.")
-    state_path = Path(target_dir).joinpath("state.json")
-    json.dump(state, open(state_path, "w"), indent=4)
+
+    if incremental_mode:
+        state_path = Path(target_dir).joinpath("state.json")
+        json.dump(state, open(state_path, "w"), indent=4)
 
 
 def main():
