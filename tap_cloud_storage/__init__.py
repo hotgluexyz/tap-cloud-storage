@@ -60,7 +60,7 @@ def parse_args():
     return args
 
 def download_with_replication_key(blob, state, target_path):
-    logger.info(f"Downloading: {blob.name} -> {target_path}")
+    logger.info(f"Downloading incremental: {blob.name} -> {target_path}")
     if not state.get(blob.name):
         blob.download_to_filename(target_path)
         state[blob.name] = {
