@@ -51,8 +51,10 @@ def parse_args():
     if args.state:
         setattr(args, 'state_path', args.state)
         if os.path.exists(args.state):
+            logger.info("Got state!")
             args.state = load_json(args.state)
 
+    logger.info(args.state)
     # Fall back to setting state to a empty dict
     if type(args.state) != dict:
         args.state = {}
