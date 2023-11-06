@@ -50,8 +50,11 @@ def parse_args():
 
     if args.state:
         setattr(args, 'state_path', args.state)
-        args.state = load_json(args.state)
-    else:
+        if os.path.exists(args.state):
+            args.state = load_json(args.state)
+
+    # Fall back to setting state to a empty dict
+    if type(args.state) != dict:
         args.state = {}
 
     return args
@@ -117,8 +120,7 @@ def download(args):
     logger.info(f"Data downloaded.")
 
     if incremental_mode:
-        state_path = Path(target_dir).joinpath("state.json")
-        json.dump(state, open(state_path, "w"), indent=4)
+        json.dump(state, open(args.state_path, "w"), indent=4)
 
 
 def main():
