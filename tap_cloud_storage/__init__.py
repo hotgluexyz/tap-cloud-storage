@@ -51,10 +51,8 @@ def parse_args():
     if args.state:
         setattr(args, 'state_path', args.state)
         if os.path.exists(args.state):
-            logger.info("Got state!")
             args.state = load_json(args.state)
 
-    logger.info(args.state)
     # Fall back to setting state to a empty dict
     if type(args.state) != dict:
         args.state = {}
@@ -63,7 +61,6 @@ def parse_args():
 
 def download_with_replication_key(blob, state, target_path):
     logger.info(f"Downloading incremental: {blob.name} -> {target_path}")
-    logger.info(state)
 
     if not state.get(blob.name):
         blob.download_to_filename(target_path)
@@ -74,7 +71,6 @@ def download_with_replication_key(blob, state, target_path):
         return state
 
     replication_key_value = datetime.fromisoformat(state[blob.name].get('replication_key_value'))
-    logger.debug(f"Comparing {blob.updated} > {replication_key_value} = {bool(blob.updated > replication_key_value)}")
 
     if blob.updated > replication_key_value:
         blob.download_to_filename(target_path)
