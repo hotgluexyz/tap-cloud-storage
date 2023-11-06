@@ -4,6 +4,7 @@ import json
 import argparse
 import logging
 
+from datetime import datetime, timedelta
 from pathlib import Path
 from google.cloud import storage
 
@@ -33,27 +34,72 @@ def parse_args():
     parser.add_argument(
         '-c', '--config',
         help='Config file',
-        required=True)
+        required=True
+    )
+
+    parser.add_argument(
+        '-s', '--state',
+        help='State file',
+        required=False
+    )
 
     args = parser.parse_args()
     if args.config:
         setattr(args, 'config_path', args.config)
         args.config = load_json(args.config)
 
+    if args.state:
+        setattr(args, 'state_path', args.state)
+        if os.path.exists(args.state):
+            args.state = load_json(args.state)
+
+    # Fall back to setting state to a empty dict
+    if type(args.state) != dict:
+        args.state = {}
+
     return args
 
+def download_with_replication_key(blob, state, target_path):
+    logger.info(f"Downloading incremental: {blob.name} -> {target_path}")
+
+    if not state.get(blob.name):
+        blob.download_to_filename(target_path)
+        state[blob.name] = {
+            "replication_key_value": blob.updated.isoformat(),
+            "replication_key": "updated"
+        }
+        return state
+
+    replication_key_value = datetime.fromisoformat(state[blob.name].get('replication_key_value'))
+
+    if blob.updated > replication_key_value:
+        blob.download_to_filename(target_path)
+        state[blob.name] = {
+            "replication_key_value": blob.updated.isoformat(),
+            "replication_key": "updated"
+        }
+        return state
+
+    # As the file didn't change, we don't need to download it again
+    logger.info(f"{blob.name} being ignored... No updates")
+    return state
 
 def download(args):
-    logger.debug(f"Downloading data...")
+    logger.info(f"Downloading data...")
     config = args.config
+    state = args.state
     bucket_name = config['bucket']
     remote_path = config['path_prefix']
     target_dir = config['target_dir']
+    incremental_mode = config['incremental_mode']
 
     # Upload all data in input_path to Google Cloud Storage
     storage_client = storage.Client.from_service_account_json(args.config_path)
     bucket = storage_client.bucket(bucket_name)
     blobs = bucket.list_blobs(prefix=remote_path)
+
+    if state == {}:
+        state = {"bookmarks": {}}
 
     for blob in blobs:
         key = blob.name
@@ -63,10 +109,20 @@ def download(args):
 
         target_path = Path(target_dir).joinpath(Path(key).name)
 
-        logger.debug(f"Downloading: {bucket_name}:{key} -> {target_path}")
-        blob.download_to_filename(target_path)
+        if incremental_mode:
+            state["bookmarks"] = download_with_replication_key(
+                blob,
+                state["bookmarks"],
+                target_path
+            )
+        else:
+            logger.debug(f"Downloading: {bucket_name}:{key} -> {target_path}")
+            blob.download_to_filename(target_path)
 
-    logger.debug(f"Data downloaded.")
+    logger.info(f"Data downloaded.")
+
+    if incremental_mode:
+        json.dump(state, open(args.state_path, "w"), indent=4)
 
 
 def main():
