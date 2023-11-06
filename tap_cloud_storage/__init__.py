@@ -70,6 +70,7 @@ def download_with_replication_key(blob, state, target_path):
         return state
 
     replication_key_value = datetime.fromisoformat(state[blob.name].get('replication_key_value'))
+    logger.debug(f"Comparing {blob.updated} > {replication_key_value} = {bool(blob.updated > replication_key_value)}")
 
     if blob.updated > replication_key_value:
         blob.download_to_filename(target_path)
@@ -115,6 +116,7 @@ def download(args):
                 target_path
             )
         else:
+            logger.debug(f"Downloading: {bucket_name}:{key} -> {target_path}")
             blob.download_to_filename(target_path)
 
     logger.info(f"Data downloaded.")
