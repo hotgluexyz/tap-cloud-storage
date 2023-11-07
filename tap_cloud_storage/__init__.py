@@ -91,7 +91,7 @@ def download(args):
     bucket_name = config['bucket']
     remote_path = config['path_prefix']
     target_dir = config['target_dir']
-    incremental_mode = config['incremental_mode']
+    incremental_mode = config.get('incremental_mode',False)
 
     # Upload all data in input_path to Google Cloud Storage
     storage_client = storage.Client.from_service_account_json(args.config_path)
