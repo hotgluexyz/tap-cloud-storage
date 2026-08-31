@@ -8,11 +8,16 @@ setup(
     description='hotglue tap for importing data from Google Cloud Storage',
     author='hotglue',
     url='https://hotglue.xyz',
-    classifiers=['Programming Language :: Python :: 3 :: Only'],
+    classifiers=[
+        'Programming Language :: Python :: 3 :: Only',
+        'Programming Language :: Python :: 3.7',
+        'Programming Language :: Python :: 3.10',
+        'Programming Language :: Python :: 3.14',
+    ],
+    python_requires='>=3.7',
     py_modules=['tap_cloud_storage'],
     install_requires=[
-        'google-cloud-storage==2.6.0',
-        'argparse==1.4.0'
+        'google-cloud-storage>=2.6.0'
     ],
     entry_points='''
         [console_scripts]
